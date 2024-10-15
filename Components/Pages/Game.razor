@@ -1,0 +1,157 @@
+﻿@page "/game"
+@using TriviaMusical.Models
+@using TriviaMusical.Services
+@inject IConfiguration Configuration
+@rendermode InteractiveServer
+
+<h3>Trivia Musical</h3>
+
+<iframe id="player-musica" src="https://www.youtube.com/embed/@(MusicaReferencia.Last().IdMusica)?autoplay=1" allow="autoplay"></iframe>
+
+<div class="cartas-jogo">
+    @foreach (var musica in MusicaJogo)
+    {
+
+
+        @if (MusicaJogo.IndexOf(musica) == 0 && MusicaJogo.IndexOf(musica) != MusicaJogo.Count - 1)
+        {
+            <button @onclick="() => compararAntes(musica.AnoLancamento)">Antes</button>
+            <div class="carta">
+                <p>@musica.NomeDoCantor</p>
+                <p style="font-size: 24px;">@musica.AnoLancamento</p>
+                <p>@musica.NomeMusica</p>
+            </div>
+            <button @onclick="() => compararEntre(musica.AnoLancamento)">Entre</button>
+        }
+        if (MusicaJogo.IndexOf(musica) == 0 && MusicaJogo.IndexOf(musica) == MusicaJogo.Count - 1)
+        {
+            <button @onclick="() => compararAntes(musica.AnoLancamento)">Antes</button>
+            <div class="carta">
+                <p>@musica.NomeDoCantor</p>
+                <p style="font-size: 24px;">@musica.AnoLancamento</p>
+                <p>@musica.NomeMusica</p>
+            </div>
+            <button @onclick="() => compararDepois(musica.AnoLancamento)">Depois</button>
+        }
+        if (MusicaJogo.IndexOf(musica) == MusicaJogo.Count - 1 && MusicaJogo.IndexOf(musica) != 0)
+        {
+            <div class="carta">
+                <p>@musica.NomeDoCantor</p>
+                <p style="font-size: 24px;">@musica.AnoLancamento</p>
+                <p>@musica.NomeMusica</p>
+            </div>
+            <button @onclick="() => compararDepois(musica.AnoLancamento)">Depois</button>
+        }
+        if (MusicaJogo.IndexOf(musica) != MusicaJogo.Count - 1 && MusicaJogo.IndexOf(musica) != 0)
+        {
+            
+            <div class="carta">
+                <p>@musica.NomeDoCantor</p>
+                <p style="font-size: 24px;">@musica.AnoLancamento</p>
+                <p>@musica.NomeMusica</p>
+            </div>
+            <button @onclick="() => compararEntre(musica.AnoLancamento)">Entre</button>
+        }
+        
+    }
+</div>
+
+@code {
+    private List<Musica> MusicaReferencia = new List<Musica>();
+    private List<Musica> MusicaJogo = new List<Musica>();
+    private MusicaService _musicaService;
+    private Musica novaReferencia;
+
+    protected override void OnInitialized()
+    {
+        _musicaService = new MusicaService(Configuration);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Inicialize a lista de músicas ao carregar o componente
+        // for (int i = 0; i < 5; i++) // Adiciona 5 músicas para começar
+        // {
+        AdicionarNovaCarta();
+        // }
+    }
+
+    public void AdicionarMusicaAleatoria()
+    {
+        Musica novaMusica;
+        
+
+        do
+        {
+            novaMusica = _musicaService.ObterMusicaAleatoria();
+            novaReferencia = _musicaService.ObterMusicaAleatoria();
+        } while (MusicaReferencia.Any(m => m.IdMusica == novaMusica.IdMusica));
+
+        MusicaReferencia.Add(novaReferencia);
+        /* MusicaJogo.Add(novaMusica);  */// Adiciona a nova música também à lista do jogo
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void AdicionarNovaCarta()
+    {
+        Musica novaMusica;
+
+        
+        do
+        {
+            novaMusica = _musicaService.ObterMusicaAleatoria();
+            novaReferencia = _musicaService.ObterMusicaAleatoria();
+        } while (MusicaReferencia.Any(m => m.IdMusica == novaMusica.IdMusica));
+
+        MusicaReferencia.Add(novaReferencia);
+        MusicaJogo.Add(novaMusica); // Adiciona a nova música também à lista do jogo
+        StateHasChanged();
+    }
+
+    public void compararAntes(int anoMusica)
+    {
+        var ultimoAnoReferencia = MusicaReferencia.Last().AnoLancamento;
+
+        if (ultimoAnoReferencia < anoMusica)
+        {
+            MusicaJogo.Add(MusicaReferencia.Last());
+            AdicionarMusicaAleatoria();
+        }
+        else
+        {
+            AdicionarMusicaAleatoria();
+        }
+    }
+
+    public void compararDepois(int anoMusica)
+    {
+        var ultimoAnoReferencia = MusicaReferencia.Last().AnoLancamento;
+
+        if (ultimoAnoReferencia > anoMusica)
+        {
+            MusicaJogo.Add(MusicaReferencia.Last());
+            AdicionarMusicaAleatoria();
+        }
+        else
+        {
+            AdicionarMusicaAleatoria();
+        }
+    }
+
+    public void compararEntre(int anoMusica)
+    {
+        var ultimoAnoReferencia = MusicaReferencia.Last().AnoLancamento;
+
+        if (MusicaJogo.Any(m => m.AnoLancamento < ultimoAnoReferencia && m.AnoLancamento > anoMusica))
+        {
+            MusicaJogo.Add(MusicaReferencia.Last());
+            AdicionarMusicaAleatoria();
+        }
+        else
+        {
+            AdicionarMusicaAleatoria();
+        }
+    }
+}
+<script src="js/site.js"></script>
