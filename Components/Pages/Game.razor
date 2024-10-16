@@ -3,7 +3,31 @@
 @using TriviaMusical.Services
 @inject IConfiguration Configuration
 @rendermode InteractiveServer
+<style>
+    .cartas-jogo {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        margin: 20px;
+    }
 
+    .carta {
+        padding: 10px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+    .botao-entre, .botao-antes, .botao-depois {
+        margin: 40%;
+        width: 30%;
+        height: 20%;        
+        font-size: 10px;
+        box-sizing: border-box;
+        
+        
+    }
+</style>
 <div class="text-center">
     <h3>Trivia Musical</h3>
 </div>
@@ -12,9 +36,12 @@
 
 <main>
 
-    <div id="cartas-jogo" class="cartas-jogo">
+    <div  class="cartas-jogo">
         @foreach (var musica in MusicaJogoOrdenada)
         {
+            var i = 0;
+
+            if (musica.AnoLancamento == MusicaJogoOrdenada.Count - 1)
             // Renderizar a primeira carta com o botão "Antes"
             @if (MusicaJogoOrdenada.IndexOf(musica) == 0)
             {
@@ -30,6 +57,7 @@
 
             if (MusicaJogoOrdenada.IndexOf(musica) != MusicaJogoOrdenada.Count - 1)
             {
+                
                 <button class="botao-entre" @onclick="() => compararEntre(musica.AnoLancamento)">Entre</button>
             }
         }
@@ -112,7 +140,7 @@
     {
         var ultimoAnoReferencia = MusicaReferencia.Last().AnoLancamento;
 
-        if (ultimoAnoReferencia < anoMusica)
+        if (ultimoAnoReferencia <= anoMusica)
         {
             MusicaJogo.Add(MusicaReferencia.Last());
             AdicionarMusicaAleatoria();
@@ -127,7 +155,7 @@
     {
         var ultimoAnoReferencia = MusicaReferencia.Last().AnoLancamento;
 
-        if (ultimoAnoReferencia > anoMusica)
+        if (ultimoAnoReferencia >= anoMusica)
         {
             MusicaJogo.Add(MusicaReferencia.Last());            
             AdicionarMusicaAleatoria();
