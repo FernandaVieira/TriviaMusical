@@ -3,6 +3,9 @@
 @using TriviaMusical.Services
 @inject IConfiguration Configuration
 @rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject MusicaService MusicaService
+
 <style>
     .cartas-jogo {
         display: grid;
@@ -21,27 +24,45 @@
     .botao-entre, .botao-antes, .botao-depois {
         margin: 40%;
         width: 30%;
-        height: 20%;        
+        height: 20%;
         font-size: 10px;
         box-sizing: border-box;
-        
-        
     }
+
+    .modal {
+        position: fixed;       
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 30px;
+        border: 2px solid #000;
+        z-index: 1000;
+        text-align: center;
+        width: 100px;
+    }
+
+        .modal h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .modal button {
+            margin: 5px;
+        }
 </style>
 <div class="text-center">
     <h3>Trivia Musical</h3>
+    <p>Pontuação: @PontuacaoJogador</p>
 </div>
 
 <iframe id="player-musica" src="https://www.youtube.com/embed/@(MusicaReferencia.Last().IdMusica)?autoplay=1" allow="autoplay"></iframe>
 
 <main>
 
-    <div  class="cartas-jogo">
+    <div class="cartas-jogo">
         @foreach (var musica in MusicaJogoOrdenada)
         {
-            var i = 0;
-
-            if (musica.AnoLancamento == MusicaJogoOrdenada.Count - 1)
             // Renderizar a primeira carta com o botão "Antes"
             @if (MusicaJogoOrdenada.IndexOf(musica) == 0)
             {
@@ -55,15 +76,24 @@
                 <p>@musica.NomeMusica</p>
             </div>
 
-            if (MusicaJogoOrdenada.IndexOf(musica) != MusicaJogoOrdenada.Count - 1)
+            if (
+            MusicaJogoOrdenada.IndexOf(musica) != MusicaJogoOrdenada.Count - 1 && musica.AnoLancamento != MusicaJogoOrdenada[MusicaJogoOrdenada.IndexOf(musica) + 1].AnoLancamento)
             {
-                
                 <button class="botao-entre" @onclick="() => compararEntre(musica.AnoLancamento)">Entre</button>
             }
         }
 
-        
         <button class="botao-depois" @onclick="() => compararDepois(MusicaJogoOrdenada.Last().AnoLancamento)">Depois</button>
+
+        @if (JogoFinalizado)
+        {
+            <div class="modal" style="display:block; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:white; padding:20px; border:1px solid black;">
+                <h2>@MensagemVitoria</h2>
+                <p>Escolha uma opção:</p>
+                <button class="btn btn-primary" onclick="location.reload()">Jogar Novamente</button>
+                <button class="btn btn-secondary" @onclick="MudarDeJogo">Mudar de Jogo</button>
+            </div>
+        }
 
     </div>
 </main>
@@ -74,6 +104,10 @@
     private MusicaService _musicaService;
     private Musica novaReferencia;
     private List<Musica> MusicaJogoOrdenada = new List<Musica>();
+    private int PontuacaoJogador = 0;
+    private DateTime TempoInicio;
+    private bool JogoFinalizado = false; // Flag para determinar se o jogo acabou
+    private string MensagemVitoria = string.Empty; // Armazena a mensagem de vitória
 
     protected override void OnInitialized()
     {
@@ -82,13 +116,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Inicialize a lista de músicas ao carregar o componente
-        // for (int i = 0; i < 5; i++) // Adiciona 5 músicas para começar
-        // {
+
+        // Inicializa o jogo e a pontuação
+        PontuacaoJogador = 0;
+        JogoFinalizado = false;
+        MusicaJogoOrdenada.Clear();
         AdicionarMusicaAleatoria();
-        // }
     }
 
+    [JSInvokable]
     public void AdicionarMusicaAleatoria()
     {
         Musica novaReferencia;
@@ -96,45 +132,26 @@
 
 
         // Gera uma música aleatória que ainda não foi adicionada
-        do
-        {
-            novaReferencia = _musicaService.ObterMusicaAleatoria();
-            novaMusica = _musicaService.ObterMusicaAleatoria();
-            // Ordena a lista
-        } while (MusicaReferencia.Any(m => m.IdMusica == novaMusica.IdMusica));  // Verifica se a música já foi adicionada anteriormente
+        novaReferencia = _musicaService.ObterMusicaAleatoria();
+        // Define o tempo de início para essa jogada
+        TempoInicio = DateTime.Now;
+        MusicaReferencia.Add(novaReferencia);
 
         // Se a lista MusicaJogoOrdenada está vazia, adiciona a nova música e ordena
         if (MusicaJogoOrdenada.Count == 0)
         {
-            
+            novaMusica = _musicaService.ObterMusicaAleatoria();
             MusicaJogo.Add(novaMusica);
-            MusicaJogoOrdenada.Add(novaMusica);  // Ordena a lista
-            MusicaReferencia.Add(novaReferencia);
+            MusicaJogoOrdenada.Add(novaMusica);  // Ordena a lista            
             StateHasChanged();  // Atualiza a interface
             return;  // Sai da função
         }
 
         // Caso já haja músicas, adiciona a nova e ordena novamente
-        
         MusicaJogoOrdenada = MusicaJogo.OrderBy(m => m.AnoLancamento).ToList();
-        MusicaReferencia.Add(novaReferencia);
+        
         StateHasChanged();  // Atualiza a interface
     }
-
-    // [JSInvokable]
-    // public void AdicionarNovaCarta()
-    // {
-    //     Musica novaMusica;
-
-    //     novaMusica = _musicaService.ObterMusicaAleatoria();
-    //     novaReferencia = _musicaService.ObterMusicaAleatoria();
-
-
-    //     MusicaReferencia.Add(novaReferencia);
-    //     MusicaJogo.Add(novaMusica); // Adiciona a nova música também à lista do jogo
-        
-
-    // }
 
     public void compararAntes(int anoMusica)
     {
@@ -142,11 +159,15 @@
 
         if (ultimoAnoReferencia <= anoMusica)
         {
+            // Resposta correta
             MusicaJogo.Add(MusicaReferencia.Last());
             AdicionarMusicaAleatoria();
+            AtualizarPontuacao(true); // Atualiza a pontuação com resposta correta
         }
         else
         {
+            // Resposta incorreta
+            AtualizarPontuacao(false); // Não ganha ponto
             AdicionarMusicaAleatoria();
         }
     }
@@ -157,11 +178,15 @@
 
         if (ultimoAnoReferencia >= anoMusica)
         {
-            MusicaJogo.Add(MusicaReferencia.Last());            
+            // Resposta correta
+            MusicaJogo.Add(MusicaReferencia.Last());
             AdicionarMusicaAleatoria();
+            AtualizarPontuacao(true); // Atualiza a pontuação com resposta correta
         }
         else
         {
+            // Resposta incorreta
+            AtualizarPontuacao(false); // Não ganha ponto
             AdicionarMusicaAleatoria();
         }
     }
@@ -185,12 +210,63 @@
                 // Está entre os dois anos
                 MusicaJogo.Add(MusicaReferencia.Last());
                 AdicionarMusicaAleatoria();
+                AtualizarPontuacao(true); // Atualiza a pontuação com resposta correta
                 return;
             }
         }
-
         // Caso o ultimoAnoReferencia não esteja entre dois anos
+        // Resposta incorreta
+        AtualizarPontuacao(false); // Não ganha ponto
         AdicionarMusicaAleatoria();
+    }
+    // Método para calcular pontos com base na rapidez
+    public void AtualizarPontuacao(bool respostaCorreta)
+    {
+        if (respostaCorreta)
+        {
+            TimeSpan tempoResposta = DateTime.Now - TempoInicio;
+            int pontosBase = 100; // Pontuação base para respostas corretas
+
+            // Quanto mais rápido, maior a pontuação
+            // Exemplo: Resposta em menos de 5 segundos ganha 100 pontos, depois diminui gradualmente
+            if (tempoResposta.TotalSeconds < 5)
+                PontuacaoJogador += pontosBase;
+            else if (tempoResposta.TotalSeconds < 10)
+                PontuacaoJogador += pontosBase / 2;
+            else
+                PontuacaoJogador += pontosBase / 4;
+
+            // Verifica se o jogador atingiu 500 pontos
+            if (PontuacaoJogador >= 500)
+            {
+                FinalizarJogo();
+            }
+        }
+    }
+    // Método para finalizar o jogo e exibir a mensagem de vitória
+    public void FinalizarJogo()
+    {
+        JogoFinalizado = true;
+        MensagemVitoria = "Vencedor!!! Você atingiu 500 pontos.";
+        StateHasChanged(); // Atualiza a UI para exibir a mensagem de vitória
+    }
+
+    // Método para reiniciar o jogo
+    public void JogarNovamente()
+    {
+        
+        MusicaService.CarregarMusicas();
+       // Chama o método para carregar músicas
+        var musicasCarregadas = MusicaService.ObterMusicas(); // Obter a lista atualizada
+        // Aqui você pode usar a lista carregada conforme necessário
+        MusicaJogoOrdenada.Clear();
+        AdicionarMusicaAleatoria(); // Reinicia o jogo
+    }
+
+    // Método para mudar de jogo, redirecionando para a página inicial
+    public void MudarDeJogo() // Isso causará o erro
+    {
+        Navigation.NavigateTo("/");
     }
 }
 <script src="js/site.js"></script>
