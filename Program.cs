@@ -2,12 +2,15 @@ using TriviaMusical.Components;
 using TriviaMusical.Data;
 using TriviaMusical.Hubs;
 using Microsoft.EntityFrameworkCore;
+using TriviaMusical.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Adicionar a string de conexão ao DbContext
 builder.Services.AddDbContext<TriviaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("TriviaDatabase")));
+
+builder.Services.AddScoped<MusicaService>(); // Registra MusicaService como um serviço
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
