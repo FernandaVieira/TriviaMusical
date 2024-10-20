@@ -1,6 +1,6 @@
 html, body {
     font-family: Arial, sans-serif;
-    background-color: #e0f7fa;
+    background-color: #ffffff;
     margin: 0;
     padding: 0;
 }
@@ -54,25 +54,3 @@ h1:focus {
 }
 
 
-.carta {
-    border: 2px solid #000;
-    padding: 1px;
-    margin: 1px;
-    text-align: center;
-}
-
-#cartas-jogo {
-    display: flex;
-    justify-content: space-between;
-}
-
-button {
-    background-color: #ff5252;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-}
-
-    

@@ -5,60 +5,17 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject MusicaService MusicaService
+<link href="css/site.css" rel="stylesheet" />
 
-<style>
-    .cartas-jogo {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 10px;
-        margin: 20px;
-    }
-
-    .carta {
-        padding: 10px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        border-radius: 5px;
-        background-color: #f9f9f9;
-    }
-
-    .botao-entre, .botao-antes, .botao-depois {
-        margin: 40%;
-        width: 30%;
-        height: 20%;
-        font-size: 10px;
-        box-sizing: border-box;
-    }
-
-    .modal {
-        position: fixed;       
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 30px;
-        border: 2px solid #000;
-        z-index: 1000;
-        text-align: center;
-        width: 100px;
-    }
-
-        .modal h2 {
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-
-        .modal button {
-            margin: 5px;
-        }
-</style>
+<main>
 <div class="text-center">
     <h3>Trivia Musical</h3>
     <p>Pontuação: @PontuacaoJogador</p>
 </div>
+    <div class="musica_container">
+        <iframe  id="player-musica" src="https://www.youtube.com/embed/@(MusicaReferencia.Last().IdMusica)?autoplay=1" allow="autoplay"></iframe>
+</div>
 
-<iframe id="player-musica" src="https://www.youtube.com/embed/@(MusicaReferencia.Last().IdMusica)?autoplay=1" allow="autoplay"></iframe>
-
-<main>
 
     <div class="cartas-jogo">
         @foreach (var musica in MusicaJogoOrdenada)
@@ -71,9 +28,9 @@
 
             // Renderizar o botão "Entre" entre as cartas
             <div class="carta">
-                <p>@musica.NomeDoCantor</p>
-                <p style="font-size: 24px;">@musica.AnoLancamento</p>
-                <p>@musica.NomeMusica</p>
+                <p style="font-size: 16px;">@musica.NomeDoCantor</p>
+                <p style="font-size: 56px;">@musica.AnoLancamento</p>
+                <p style ="font-size: 14px;">@musica.NomeMusica</p>
             </div>
 
             if (
@@ -142,14 +99,14 @@
         {
             novaMusica = _musicaService.ObterMusicaAleatoria();
             MusicaJogo.Add(novaMusica);
-            MusicaJogoOrdenada.Add(novaMusica);  // Ordena a lista            
+            MusicaJogoOrdenada.Add(novaMusica);  // Ordena a lista
             StateHasChanged();  // Atualiza a interface
             return;  // Sai da função
         }
 
         // Caso já haja músicas, adiciona a nova e ordena novamente
         MusicaJogoOrdenada = MusicaJogo.OrderBy(m => m.AnoLancamento).ToList();
-        
+
         StateHasChanged();  // Atualiza a interface
     }
 
@@ -237,7 +194,7 @@
                 PontuacaoJogador += pontosBase / 4;
 
             // Verifica se o jogador atingiu 500 pontos
-            if (PontuacaoJogador >= 500)
+            if (PontuacaoJogador >= 800)
             {
                 FinalizarJogo();
             }
@@ -254,11 +211,11 @@
     // Método para reiniciar o jogo
     public void JogarNovamente()
     {
-        
+
         MusicaService.CarregarMusicas();
-       // Chama o método para carregar músicas
+        // Chama o método para carregar músicas
         var musicasCarregadas = MusicaService.ObterMusicas(); // Obter a lista atualizada
-        // Aqui você pode usar a lista carregada conforme necessário
+                                                              // Aqui você pode usar a lista carregada conforme necessário
         MusicaJogoOrdenada.Clear();
         AdicionarMusicaAleatoria(); // Reinicia o jogo
     }
